@@ -1,4 +1,4 @@
-import { chromium } from 'playwright';
+import { chromium } from 'playwright-core';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -166,7 +166,11 @@ export async function performSessionCheckAndWarming(slot) {
   const password = credentials.password;
   const userSessionPath = getSessionPath(email);
 
-  const browser = await chromium.launch({ headless: true });
+  const launchOptions = { headless: true };
+  if (process.env.CHROMIUM_PATH) {
+    launchOptions.executablePath = process.env.CHROMIUM_PATH;
+  }
+  const browser = await chromium.launch(launchOptions);
   
   // Charger la session isolée si elle existe
   let contextOptions = {};
@@ -263,7 +267,11 @@ export async function performBooking(slot) {
   const dateDetails = getJ7DateDetails(day);
   logEvent('BOOKING', 'INFO', `Date cible J+7 : ${dateDetails.frenchDate} (${dateDetails.longDateFr})`);
 
-  const browser = await chromium.launch({ headless: true });
+  const launchOptions = { headless: true };
+  if (process.env.CHROMIUM_PATH) {
+    launchOptions.executablePath = process.env.CHROMIUM_PATH;
+  }
+  const browser = await chromium.launch(launchOptions);
   const context = await browser.newContext({ storageState: userSessionPath });
   const page = await context.newPage();
   

@@ -13,6 +13,6 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "nodemailer": "^8.0.6",
-    "playwright": "^1.60.0"
+    "playwright-core": "^1.60.0"
   }
 }

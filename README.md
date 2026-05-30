@@ -62,14 +62,17 @@ cd TENNIS94
 npm install
 ```
 
-### 2. Installer Chromium et les dépendances du système (LXC headless)
-Pour exécuter Chromium en mode sans tête (headless) sans erreur de librairies partagées manquantes :
-```bash
-# Télécharge les binaires Chromium locaux
-npx playwright install chromium
+### 2. Installer Chromium au niveau de l'OS (Solution ultra-légère)
+Pour éviter de télécharger les lourds navigateurs privés de Playwright (~400 Mo) et économiser de l'espace disque, le projet utilise `playwright-core` branché directement sur le Chromium du système.
 
-# Installe les dépendances système Linux requises (polices, libnss, libgbm, etc.)
-npx playwright install-deps
+Installez Chromium et ses dépendances graphiques headless directement via le gestionnaire de paquets de votre OS :
+```bash
+# Pour Debian/Ubuntu (LXC)
+sudo apt update
+sudo apt install -y chromium
+
+# Localisez le chemin de votre binaire Chromium (généralement /usr/bin/chromium)
+which chromium
 ```
 
 ### 3. Configurer les variables d'environnement
@@ -77,7 +80,10 @@ Créez votre fichier `.env` local :
 ```bash
 cp .env.example .env
 ```
-Éditez le fichier `.env` pour configurer le port de l'application et les paramètres de messagerie SMTP (voir section [Configuration SMTP](#-configuration-smtp) ci-dessous).
+Éditez le fichier `.env` pour y configurer le port, vos notifications SMTP et le chemin vers le binaire Chromium système installé à l'étape précédente :
+```env
+CHROMIUM_PATH=/usr/bin/chromium
+```
 
 ### 4. Configurer les comptes utilisateurs
 Le projet prend en charge la gestion de **plusieurs comptes d'accès simultanés** (les identifiants ne sont plus dans le `.env` pour des raisons de sécurité).
@@ -173,10 +179,9 @@ node src/main.js --test-email
 ## 🛠️ Diagnostics et Résolution de Problèmes (Troubleshooting)
 
 ### Erreurs de dépendances système Chromium dans LXC
-Si Playwright plante au démarrage avec une erreur indiquant qu'une bibliothèque partagée (.so) est introuvable :
+En installant Chromium via le gestionnaire de paquets (`sudo apt install chromium`), les dépendances et bibliothèques système (.so) sont résolues automatiquement par l'OS. Si un problème persiste ou si vous utilisez un binaire externe, installez les paquets de compatibilité système requis :
 ```bash
-# Exécutez l'installation des dépendances Chromium au niveau système (requiert sudo dans le LXC)
-sudo npx playwright install-deps
+sudo apt install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2t64
 ```
 
 ### Problème de permission systemd
