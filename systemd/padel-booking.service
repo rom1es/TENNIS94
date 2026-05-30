@@ -1,0 +1,11 @@
+[Unit]
+Description=Automate de reservation Padel Sport94
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=__WORKDIR__
+ExecStart=__NODE__ src/main.js
+EnvironmentFile=__WORKDIR__/.env
+StandardOutput=journal
+StandardError=journal

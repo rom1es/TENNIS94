@@ -1,0 +1,12 @@
+[Unit]
+Description=Planificateur horaire de l'automate de reservation Padel Sport94
+
+[Timer]
+# Se declenche toutes les heures a la minute 59:00 (pour le warming) et la minute 00:00 (pour la reservation J-7)
+OnCalendar=*-*-* *:59:00
+OnCalendar=*-*-* *:00:00
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

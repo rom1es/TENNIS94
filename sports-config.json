@@ -1,0 +1,35 @@
+{
+  "Padel": {
+    "name": "Padel",
+    "courts": [
+      { "id": 22, "name": "Padel A" },
+      { "id": 23, "name": "Padel B" },
+      { "id": 24, "name": "Padel C" },
+      { "id": 25, "name": "Padel D" }
+    ]
+  },
+  "Tennis": {
+    "name": "Tennis",
+    "courts": [
+      { "id": 2, "name": "Tennis 2" },
+      { "id": 3, "name": "Tennis 3" },
+      { "id": 4, "name": "Tennis 4" },
+      { "id": 5, "name": "Tennis 5" },
+      { "id": 12, "name": "Tennis 12" },
+      { "id": 13, "name": "Tennis 13" },
+      { "id": 14, "name": "Tennis 14" },
+      { "id": 15, "name": "Tennis 15" },
+      { "id": 16, "name": "Tennis 16" },
+      { "id": 17, "name": "Tennis 17" }
+    ]
+  },
+  "Pickleball": {
+    "name": "Pickleball",
+    "courts": [
+      { "id": 63, "name": "P1" },
+      { "id": 64, "name": "P2" },
+      { "id": 65, "name": "P3" },
+      { "id": 1, "name": "P4" }
+    ]
+  }
+}

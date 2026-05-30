@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Padel Tremblay - Tableau de Bord de Réservation</title>
+  <!-- Importation de la police Premium Google Font Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Icônes FontAwesome pour une UI professionnelle -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow spheres for rich design aesthetics -->
+  <div class="glow-sphere glow-1"></div>
+  <div class="glow-sphere glow-2"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-logo">
+        <div class="icon-wrapper">
+          <i class="fa-solid fa-table-tennis-paddle-ball"></i>
+        </div>
+        <div>
+          <h1>PADEL 94</h1>
+          <p class="subtitle">Automate & Contrôle J-7 • Parc du Tremblay</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="open-accounts-btn" class="btn btn-secondary">
+          <i class="fa-solid fa-users-gear" style="color: var(--accent-color);"></i> Gérer les Comptes
+        </button>
+        <div class="header-status" id="system-time">
+          <i class="fa-regular fa-clock"></i> <span>--:--:--</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Grid Layout -->
+    <main class="app-grid">
+      
+      <!-- Left Column: Scheduler & Systemd Status & Planning -->
+      <div class="grid-column">
+        
+        <!-- Glass Card 1: Systemd Scheduler Controller -->
+        <section class="glass-card controller-card">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="fa-solid fa-square-poll-horizontal"></i>
+              <h2>Planificateur Système</h2>
+            </div>
+            <span class="status-badge" id="timer-status-badge">Chargement...</span>
+          </div>
+          
+          <p class="card-desc">Activez ou désactivez le déclenchement automatique J-7 des tâches système à la seconde près.</p>
+          
+          <div class="control-row">
+            <span class="control-label">Déclenchement Automatique (systemd)</span>
+            <label class="switch">
+              <input type="checkbox" id="timer-toggle" disabled>
+              <span class="slider round"></span>
+            </label>
+          </div>
+          
+          <div class="scheduler-meta">
+            <div class="meta-item">
+              <span class="meta-label">Prochaine exécution planifiée :</span>
+              <span class="meta-val" id="next-execution">Calcul en cours...</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Glass Card 2: Interactive Booking Schedule Config -->
+        <section class="glass-card config-card">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="fa-solid fa-calendar-days"></i>
+              <h2>Planning de Réservation</h2>
+            </div>
+            <div class="config-actions">
+              <button id="open-planning-modal-btn" class="btn btn-secondary btn-sm" title="Ajouter un créneau">
+                <i class="fa-solid fa-plus"></i> Ajouter
+              </button>
+              <button id="save-config-btn" class="btn btn-save-inactive btn-sm" disabled>
+                <i class="fa-solid fa-floppy-disk"></i> Enregistrer
+              </button>
+            </div>
+          </div>
+          
+          <p class="card-desc">Planning actuel des réservations. Cliquez sur un créneau pour le modifier, ou sur la corbeille pour le supprimer.</p>
+          
+          <div class="booking-list" id="booking-list-container">
+            <!-- Rempli dynamiquement en JS -->
+            <div class="loading-placeholder">Chargement du planning...</div>
+          </div>
+        </section>
+        
+      </div>
+
+      <!-- Right Column: Live Logs & History -->
+      <div class="grid-column">
+        
+        <!-- Glass Card 3: Booking Attempt History -->
+        <section class="glass-card history-card">
+          <div class="card-header">
+            <div class="header-title">
+              <i class="fa-solid fa-clock-history"></i>
+              <h2>Historique des Réservations</h2>
+            </div>
+            <button id="refresh-history-btn" class="btn btn-icon" title="Rafraîchir l'historique">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+          </div>
+          
+          <p class="card-desc">Consultez l'historique complet des tentatives de réservation effectuées par l'automate.</p>
+          
+          <div class="history-table-container">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Date Exéc.</th>
+                  <th>Créneau Cible</th>
+                  <th>Statut</th>
+                  <th>Terrain</th>
+                  <th>Compte utilisé</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody">
+                <!-- Rempli dynamiquement en JS -->
+                <tr>
+                  <td colspan="5" class="table-loading">Chargement de l'historique...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        
+      </div>
+      
+    </main>
+
+    <!-- Modal de Gestion des Comptes -->
+    <div id="accounts-modal" class="modal-backdrop hidden">
+      <div class="modal-content glass-card">
+        <div class="card-header">
+          <div class="header-title">
+            <i class="fa-solid fa-users-gear" style="color: var(--accent-color);"></i>
+            <h2>Comptes Sport94</h2>
+          </div>
+          <button id="close-accounts-btn" class="btn btn-icon" title="Fermer">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        
+        <p class="card-desc">Enregistrez ou supprimez vos différents comptes Sport94 pour contourner les quotas de réservation (1h le week-end, 2h en semaine).</p>
+        
+        <div class="accounts-list" id="accounts-list-container">
+          <!-- Rempli dynamiquement en JS -->
+          <div class="loading-placeholder">Chargement des comptes...</div>
+        </div>
+        
+        <form class="add-account-form" id="add-account-form">
+          <div class="input-group">
+            <input type="email" id="new-account-email" placeholder="Adresse e-mail (ex: romain@mail.com)" required>
+            <input type="password" id="new-account-password" placeholder="Mot de passe" required>
+          </div>
+          <button type="submit" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">
+            <i class="fa-solid fa-user-plus"></i> Enregistrer le compte
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal de Planification -->
+    <div id="planning-modal" class="modal-backdrop hidden">
+      <div class="modal-content glass-card">
+        <div class="card-header">
+          <div class="header-title">
+            <i class="fa-solid fa-calendar-days" style="color: var(--primary-color);"></i>
+            <h2 id="planning-modal-title">Ajouter un créneau</h2>
+          </div>
+          <button id="close-planning-modal-btn" class="btn btn-icon" title="Fermer">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        
+        <p class="card-desc">Choisissez le jour de la semaine, la tranche horaire, le type de sport et le compte Sport94 associé.</p>
+        
+        <div class="add-slot-form" style="border: none; padding-top: 0;">
+          <div class="select-group">
+            <select id="new-slot-day">
+              <option value="Monday">Lundi</option>
+              <option value="Tuesday">Mardi</option>
+              <option value="Wednesday">Mercredi</option>
+              <option value="Thursday">Jeudi</option>
+              <option value="Friday">Vendredi</option>
+              <option value="Saturday" selected>Samedi</option>
+              <option value="Sunday">Dimanche</option>
+            </select>
+            <select id="new-slot-hour">
+              <option value="8">08:00 - 09:00</option>
+              <option value="9" selected>09:00 - 10:00</option>
+              <option value="10">10:00 - 11:00</option>
+              <option value="11">11:00 - 12:00</option>
+              <option value="12">12:00 - 13:00</option>
+              <option value="13">13:00 - 14:00</option>
+              <option value="14">14:00 - 15:00</option>
+              <option value="15">15:00 - 16:00</option>
+              <option value="16">16:00 - 17:00</option>
+              <option value="17">17:00 - 18:00</option>
+              <option value="18">18:00 - 19:00</option>
+              <option value="19">19:00 - 20:00</option>
+              <option value="20">20:00 - 21:00</option>
+            </select>
+          </div>
+          
+          <!-- Sport Selector Dropdown (NEW) -->
+          <div style="margin-top: 10px;">
+            <select id="new-slot-sport" style="width: 100%;" required>
+              <option value="" disabled selected>Choisir un sport...</option>
+            </select>
+          </div>
+          
+          <div style="margin-top: 10px;">
+            <select id="new-slot-account" style="width: 100%;" required>
+              <option value="" disabled selected>Choisir un compte...</option>
+            </select>
+          </div>
+          
+          <button type="button" id="submit-slot-btn" class="btn btn-primary" style="margin-top: 15px; width: 100%;">
+            <i class="fa-solid fa-plus"></i> Ajouter au planning
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification system toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <footer class="app-footer">
+      <p>Automate de réservation Padel J-7 pour le Parc du Tremblay • Développé en Node.js, Playwright et Express • 2026</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

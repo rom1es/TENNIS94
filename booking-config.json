@@ -1,0 +1,10 @@
+{
+  "bookings": [
+    {
+      "day": "Friday",
+      "start_hour": 20,
+      "sport": "Tennis",
+      "account": "romain.esnault@gmail.com"
+    }
+  ]
+}
