@@ -52,13 +52,18 @@ TENNIS94/
 Ce projet s'exécute de manière optimale sur un conteneur **Linux LXC** sous Node.js (v20+).
 
 ### 1. Cloner et installer les dépendances
-Déplacez-vous dans votre dossier de projet et lancez l'installation :
+Exécutez les commandes suivantes dans votre terminal pour cloner le projet et installer les dépendances Node.js :
 ```bash
+# Récupération du projet (par SSH)
+git clone git@github.com:rom1es/TENNIS94.git
+cd TENNIS94
+
+# Installation des dépendances
 npm install
 ```
 
-### 2. Installer Chromium et les dépendances du système (Conteneur LXC headless)
-Pour que Playwright puisse exécuter Chromium en mode sans tête (headless) dans un conteneur Linux LXC, installez le navigateur et les bibliothèques système partagées nécessaires :
+### 2. Installer Chromium et les dépendances du système (LXC headless)
+Pour exécuter Chromium en mode sans tête (headless) sans erreur de librairies partagées manquantes :
 ```bash
 # Télécharge les binaires Chromium locaux
 npx playwright install chromium
@@ -68,18 +73,29 @@ npx playwright install-deps
 ```
 
 ### 3. Configurer les variables d'environnement
-Créez votre fichier `.env` à partir du modèle fourni :
+Créez votre fichier `.env` local :
 ```bash
 cp .env.example .env
 ```
-Éditez le fichier `.env` pour y renseigner vos informations de connexion Sport94 et vos identifiants de messagerie SMTP (voir section [Configuration SMTP](#-configuration-smtp) ci-dessous).
+Éditez le fichier `.env` pour configurer le port de l'application et les paramètres de messagerie SMTP (voir section [Configuration SMTP](#-configuration-smtp) ci-dessous).
 
-**Sécurisez vos fichiers de configuration locaux** :
-Appliquez des droits stricts sur votre fichier `.env` pour restreindre sa lecture au seul utilisateur exécutant l'automate :
+### 4. Configurer les comptes utilisateurs
+Le projet prend en charge la gestion de **plusieurs comptes d'accès simultanés** (les identifiants ne sont plus dans le `.env` pour des raisons de sécurité).
+Créez le fichier de base `accounts.json` vide si vous souhaitez les renseigner via l'interface, ou pré-remplissez-le :
 ```bash
-chmod 600 .env
+echo '[]' > accounts.json
 ```
-*(L'automate appliquera automatiquement les droits `chmod 600` sur `session.json` et `bookings-history.json` lors de leur création).*
+
+### 5. Sécuriser les droits d'accès
+Pour protéger vos comptes et identifiants locaux contre la lecture par d'autres utilisateurs du système :
+```bash
+# Sécurisation des fichiers de configuration
+chmod 600 .env accounts.json
+
+# Rendre le script de gestion système exécutable
+chmod +x systemd/manage.sh
+```
+*(Le scraper appliquera automatiquement les droits `chmod 600` sur les fichiers de cookies isolés `session-*.json` et sur l'historique lors de leur création).*
 
 ---
 
