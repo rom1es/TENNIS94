@@ -5,9 +5,11 @@
 
 USER_SYSTEMD_DIR="$HOME/.config/systemd/user"
 SERVICE_NAME="padel-booking.service"
+SERVER_SERVICE_NAME="padel-server.service"
 TIMER_NAME="padel-booking.timer"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 
 # Détecter le chemin du binaire Node.js
 NODE_PATH="$(which node)"
@@ -30,8 +32,11 @@ function install_units() {
   echo "[SYSTEMD] Node trouvé : $NODE_PATH"
   echo "[SYSTEMD] Répertoire de travail : $PROJECT_DIR"
   
-  # Remplacer les variables de gabarit et copier le fichier de service
+  # Remplacer les variables de gabarit et copier le fichier de service de l'automate
   sed -e "s|__WORKDIR__|$PROJECT_DIR|g" -e "s|__NODE__|$NODE_PATH|g" "$SCRIPT_DIR/$SERVICE_NAME" > "$USER_SYSTEMD_DIR/$SERVICE_NAME"
+  
+  # Remplacer les variables de gabarit et copier le fichier de service du serveur web
+  sed -e "s|__WORKDIR__|$PROJECT_DIR|g" -e "s|__NODE__|$NODE_PATH|g" "$SCRIPT_DIR/$SERVER_SERVICE_NAME" > "$USER_SYSTEMD_DIR/$SERVER_SERVICE_NAME"
   
   # Copier le timer
   cp "$SCRIPT_DIR/$TIMER_NAME" "$USER_SYSTEMD_DIR/$TIMER_NAME"
@@ -53,7 +58,11 @@ case "$1" in
     systemctl --user enable "$TIMER_NAME" 2>/dev/null
     systemctl --user start "$TIMER_NAME" 2>/dev/null
     
-    echo "[SYSTEMD] [SUCCESS] Installation réussie. Le timer a été activé et démarré."
+    # Activer et démarrer le serveur web
+    systemctl --user enable "$SERVER_SERVICE_NAME" 2>/dev/null
+    systemctl --user start "$SERVER_SERVICE_NAME" 2>/dev/null
+    
+    echo "[SYSTEMD] [SUCCESS] Installation réussie. Le timer et le serveur web ont été activés et démarrés."
     ;;
     
   enable)

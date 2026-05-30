@@ -114,7 +114,9 @@ Le script `systemd/manage.sh` configure dynamiquement les chemins absolus vers v
 ```bash
 ./systemd/manage.sh install
 ```
-Cette commande copie les unités de service dans `~/.config/systemd/user/`, recharge le démon systemd et démarre le timer automatique.
+Cette commande copie les unités de service dans `~/.config/systemd/user/`, recharge le démon systemd et démarre automatiquement :
+1. Le **timer de planification** (`padel-booking.timer`) pour les réservations automatisées.
+2. Le **serveur web en arrière-plan** (`padel-server.service`) pour maintenir l'interface utilisateur toujours en ligne.
 
 ### 2. Fonctionnement du Planificateur
 Le timer systemd est configuré pour se réveiller **toutes les heures à la minute 59:00 et 00:00**.
@@ -129,11 +131,21 @@ Ce choix d'architecture découple totalement systemd de votre planning : vous po
     ```bash
     systemctl --user list-timers --all | grep padel-booking
     ```
-*   **Consulter les logs temps réel du robot** (via journald) :
+*   **Consulter les logs temps réel du robot de réservation** :
     ```bash
     journalctl --user -u padel-booking.service -f
     ```
-*   **Désactiver temporairement le timer** :
+*   **Consulter les logs temps réel du serveur de contrôle** :
+    ```bash
+    journalctl --user -u padel-server.service -f
+    ```
+*   **Démarrer / Arrêter / Redémarrer le serveur de contrôle** :
+    ```bash
+    systemctl --user start padel-server.service
+    systemctl --user stop padel-server.service
+    systemctl --user restart padel-server.service
+    ```
+*   **Désactiver temporairement le timer automatique de réservation** :
     ```bash
     ./systemd/manage.sh disable
     ```
@@ -142,7 +154,7 @@ Ce choix d'architecture découple totalement systemd de votre planning : vous po
 
 ## 💻 Utilisation du Tableau de Bord Web
 
-Démarrez le serveur web de contrôle :
+Si vous n'utilisez pas le service d'arrière-plan systemd ci-dessus, vous pouvez démarrer manuellement le serveur de contrôle :
 ```bash
 npm run server
 ```

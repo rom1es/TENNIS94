@@ -1,0 +1,16 @@
+[Unit]
+Description=Serveur Web de Controle Padel Sport94
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=__WORKDIR__
+ExecStart=__NODE__ src/main.js --server
+EnvironmentFile=__WORKDIR__/.env
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
