@@ -11,8 +11,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 
-# Détecter le chemin du binaire Node.js
-NODE_PATH="$(which node)"
+# Détecter le chemin du binaire Node.js (variable d'env, command -v, which ou chemins standards)
+if [ -z "$NODE_PATH" ]; then
+  NODE_PATH="$(command -v node 2>/dev/null || which node 2>/dev/null)"
+fi
+
+if [ -z "$NODE_PATH" ]; then
+  for candidate in /usr/bin/node /usr/local/bin/node "$HOME/.nvm/versions/node/"*/bin/node "$HOME/.asdf/shims/node" /usr/bin/nodejs; do
+    if [ -x "$candidate" ]; then
+      NODE_PATH="$candidate"
+      break
+    fi
+  done
+fi
 
 function print_usage() {
   echo "Usage: $0 {install|enable|disable|status}"
