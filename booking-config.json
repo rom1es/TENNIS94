@@ -1,9 +1,9 @@
 {
   "bookings": [
     {
-      "day": "Friday",
-      "start_hour": 20,
-      "sport": "Tennis",
+      "day": "Thursday",
+      "start_hour": 18,
+      "sport": "Padel",
       "account": "romain.esnault@gmail.com"
     }
   ]

@@ -818,3 +818,44 @@ select:focus {
   cursor: not-allowed;
   opacity: 0.5;
 }
+
+/* Badge utilisateur Keycloak */
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  backdrop-filter: blur(10px);
+}
+
+.user-badge i {
+  color: var(--accent-color);
+  font-size: 16px;
+}
+
+.user-badge .logout-btn {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-left: 5px;
+  transition: var(--transition-smooth);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.user-badge .logout-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  transform: scale(1.1);
+}
+

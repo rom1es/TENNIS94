@@ -1,3 +1,15 @@
+// Intercepteur de requêtes global pour détecter les 401 (Non authentifié Keycloak)
+const originalFetch = window.fetch;
+window.fetch = async function(...args) {
+  const response = await originalFetch(...args);
+  if (response.status === 401) {
+    console.warn('[AUTH] Session expirée ou non authentifié. Redirection vers Keycloak.');
+    window.location.href = '/login';
+    return new Promise(() => {}); // Bloque la résolution pour éviter d'autres erreurs JS
+  }
+  return response;
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   // Sélection des éléments du DOM
   const timerToggle = document.getElementById('timer-toggle');
@@ -51,6 +63,26 @@ document.addEventListener('DOMContentLoaded', () => {
     'Saturday': 'Samedi',
     'Sunday': 'Dimanche'
   };
+
+  // --- CHARGEMENT INFOS UTILISATEUR KEYCLOAK ---
+  async function loadUserInfo() {
+    try {
+      const res = await fetch('/api/user-info');
+      if (!res.ok) return;
+      const data = await res.json();
+      const badge = document.getElementById('user-badge');
+      const nameSpan = document.getElementById('user-display-name');
+      
+      if (data.enabled && data.user) {
+        nameSpan.textContent = data.user.fullName || data.user.username;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    } catch (err) {
+      console.error('Erreur chargement infos utilisateur :', err);
+    }
+  }
 
   // --- 1. HORLOGE SYSTEME ---
   function updateTime() {
@@ -588,6 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- 11. INITIALISATION GLOBALE ---
+  loadUserInfo();
   fetchAccounts().then(() => {
     fetchConfig();
     fetchSystemdStatus();

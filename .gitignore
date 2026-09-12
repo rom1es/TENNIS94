@@ -8,3 +8,4 @@ bookings-history.json
 _bmad/
 _bmad-output/
 .agent/
+logs/

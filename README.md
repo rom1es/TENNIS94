@@ -152,9 +152,42 @@ Ce choix d'architecture découple totalement systemd de votre planning : vous po
 
 ---
 
-## 💻 Utilisation du Tableau de Bord Web
+## 🕹️ Gestion Unifiée des Services (Keycloak & TENNIS94)
 
-Si vous n'utilisez pas le service d'arrière-plan systemd ci-dessus, vous pouvez démarrer manuellement le serveur de contrôle :
+Un script tout-en-un [manage-services.sh](file:///home/romain/Documents/Projects/TENNIS94/manage-services.sh) est disponible à la racine du projet pour piloter facilement Keycloak et le serveur web de contrôle :
+
+```bash
+# Vérifier l'état de santé de tous les composants (Postgres, Keycloak, TENNIS94, Timer J-7)
+./manage-services.sh status
+
+# Démarrer tous les services d'un coup (PostgreSQL + Keycloak + TENNIS94)
+./manage-services.sh start
+
+# Arrêter tous les services
+./manage-services.sh stop
+
+# Redémarrer tous les services
+./manage-services.sh restart
+
+# Gérer un composant spécifique (keycloak ou tennis94)
+./manage-services.sh start keycloak
+./manage-services.sh stop keycloak
+./manage-services.sh status keycloak
+
+./manage-services.sh start tennis94
+./manage-services.sh stop tennis94
+./manage-services.sh status tennis94
+
+# Suivre les logs d'un service en direct
+./manage-services.sh logs keycloak
+./manage-services.sh logs tennis94
+```
+
+---
+
+## 💻 Utilisation Manuelle du Tableau de Bord Web
+
+Si vous préférez lancer le serveur directement au premier plan dans votre terminal :
 ```bash
 npm run server
 ```

@@ -4,6 +4,8 @@ import path from 'path';
 import { exec } from 'child_process';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { Issuer } from 'openid-client';
+import session from 'express-session';
 import { performBooking } from './scraper.js';
 
 dotenv.config();
@@ -15,7 +17,169 @@ const rootDir = path.resolve(__dirname, '..');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configuration de session Express
+app.set('trust proxy', 1); // Fait confiance au reverse proxy pour le cookie Secure en HTTPS
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'un_secret_par_defaut_pour_le_padel',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.COOKIE_SECURE === 'true', // Configurable via COOKIE_SECURE (évite les blocages sur localhost HTTP)
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 24 heures
+  }
+}));
+
 app.use(express.json());
+
+// Découverte OIDC dynamique
+let oidcClient = null;
+if (process.env.ENABLE_KEYCLOAK === 'true') {
+  try {
+    console.log('[OIDC] Découverte de l\'émetteur Keycloak via :', process.env.KC_DISCOVERY_URL);
+    const keycloakIssuer = await Issuer.discover(process.env.KC_DISCOVERY_URL);
+    oidcClient = new keycloakIssuer.Client({
+      client_id: process.env.KC_CLIENT_ID,
+      client_secret: process.env.KC_CLIENT_SECRET,
+      redirect_uris: [process.env.KC_REDIRECT_URI],
+      response_types: ['code'],
+    });
+    console.log('[OIDC] [SUCCESS] Client Keycloak initialisé.');
+  } catch (err) {
+    console.error('[OIDC] [FATAL] Impossible d\'initialiser Keycloak :', err.message);
+    process.exit(1);
+  }
+}
+
+// Middleware de vérification d'authentification
+function requireAuth(req, res, next) {
+  if (process.env.ENABLE_KEYCLOAK !== 'true') {
+    return next();
+  }
+  if (req.session && req.session.userInfo) {
+    return next();
+  }
+  if (req.path.startsWith('/api/')) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
+  res.redirect('/login');
+}
+
+// Routes d'authentification ouvertes (avant requireAuth)
+app.get('/login', (req, res) => {
+  if (process.env.ENABLE_KEYCLOAK !== 'true') {
+    return res.redirect('/');
+  }
+  const authorizationUrl = oidcClient.authorizationUrl({
+    scope: 'openid profile email',
+  });
+  res.redirect(authorizationUrl);
+});
+
+app.get('/auth/callback', async (req, res) => {
+  if (process.env.ENABLE_KEYCLOAK !== 'true') {
+    return res.redirect('/');
+  }
+  try {
+    const params = oidcClient.callbackParams(req);
+    const tokenSet = await oidcClient.callback(process.env.KC_REDIRECT_URI, params);
+    const claims = tokenSet.claims();
+    
+    // Récupérer et valider le rôle padel-admin (supporte ID Token et Access Token)
+    let roles = [];
+    if (claims.realm_access && Array.isArray(claims.realm_access.roles)) {
+      roles = claims.realm_access.roles;
+    }
+    // Fallback : dans Keycloak par défaut, realm_access est dans l'Access Token
+    if (!roles.includes('padel-admin') && tokenSet.access_token) {
+      try {
+        const parts = tokenSet.access_token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+          if (payload.realm_access && Array.isArray(payload.realm_access.roles)) {
+            roles = Array.from(new Set([...roles, ...payload.realm_access.roles]));
+          }
+        }
+      } catch (err) {
+        console.warn('[OIDC] Erreur lors de l\'inspection de l\'access_token :', err.message);
+      }
+    }
+    
+    if (!roles.includes('padel-admin')) {
+      console.warn(`[OIDC] [WARN] Accès interdit pour ${claims.preferred_username} (rôle padel-admin manquant, rôles reçus: ${roles.join(', ')})`);
+      return res.status(403).send(`
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Accès Refusé</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f7fafc; color: #2d3748;">
+          <div style="max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <h1 style="color: #e53e3e; font-size: 40px; margin-top: 0;">❌ Accès Refusé</h1>
+            <p style="font-size: 16px;">Vous êtes authentifié sur Keycloak, mais vous ne possédez pas le rôle requis (<strong>padel-admin</strong>) pour gérer cet automate.</p>
+            <p style="font-size: 14px; color: #718096; margin-bottom: 30px;">Veuillez contacter votre administrateur système.</p>
+            <a href="/logout" style="display: inline-block; padding: 12px 24px; background-color: #3182ce; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Se déconnecter</a>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+
+    req.session.idToken = tokenSet.id_token;
+    req.session.userInfo = {
+      username: claims.preferred_username,
+      email: claims.email,
+      firstName: claims.given_name || '',
+      lastName: claims.family_name || '',
+      fullName: claims.name || claims.preferred_username
+    };
+    
+    console.log(`[OIDC] [SUCCESS] Connexion autorisée pour l'utilisateur : ${claims.preferred_username}`);
+    res.redirect('/');
+  } catch (err) {
+    console.error('[OIDC] [ERROR] Échec du callback OIDC Keycloak :', err.message);
+    res.status(500).send('Erreur d\'authentification.');
+  }
+});
+
+app.get('/logout', (req, res) => {
+  const idToken = req.session ? req.session.idToken : null;
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('[SESSION] [ERROR] Impossible de détruire la session :', err.message);
+    }
+    if (process.env.ENABLE_KEYCLOAK === 'true') {
+      const baseLogoutUrl = `${process.env.KC_DISCOVERY_URL.replace('/.well-known/openid-configuration', '')}/protocol/openid-connect/logout`;
+      if (idToken) {
+        // Redirection OIDC RP-Initiated conforme avec id_token_hint
+        const logoutUrl = `${baseLogoutUrl}`
+          + `?post_logout_redirect_uri=${encodeURIComponent(process.env.KC_REDIRECT_URI.replace('/auth/callback', ''))}`
+          + `&id_token_hint=${idToken}`;
+        return res.redirect(logoutUrl);
+      } else {
+        // Évite le crash "Missing id_token_hint" en omettant la redirection post-déconnexion
+        return res.redirect(baseLogoutUrl);
+      }
+    }
+    res.redirect('/');
+  });
+});
+
+app.get('/api/user-info', (req, res) => {
+  if (process.env.ENABLE_KEYCLOAK !== 'true') {
+    return res.json({ enabled: false });
+  }
+  res.json({
+    enabled: true,
+    user: req.session.userInfo
+  });
+});
+
+// Protection de tous les accès statiques et APIs qui suivent
+app.use(requireAuth);
+
 // Servir les fichiers statiques de l'interface utilisateur
 app.use(express.static(path.join(rootDir, 'public')));
 

@@ -1,0 +1,17 @@
+[Unit]
+Description=Keycloak Authentication Server
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=exec
+User=keycloak
+Group=keycloak
+ExecStart=/opt/keycloak/bin/kc.sh start-dev --http-port=8080 --http-host=0.0.0.0
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
